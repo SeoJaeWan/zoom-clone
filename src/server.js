@@ -17,19 +17,26 @@ const server = http.createServer(app);
 const io = SocketIO(server);
 
 io.on("connection", (socket) => {
+  socket["nickname"] = "Anon";
+
   socket.on("room", (msg, showRoom) => {
     socket.join(msg);
 
     showRoom();
 
-    socket.to(msg).emit("welcome");
+    socket.to(msg).emit("welcome", socket["nickname"]);
   });
   socket.on("disconnecting", () => {
-    socket.rooms.forEach((room) => socket.to(room).emit("bye"));
+    socket.rooms.forEach((room) =>
+      socket.to(room).emit("bye", socket["nickname"])
+    );
   });
   socket.on("new_message", (msg, room, done) => {
-    socket.to(room).emit("new_message", msg);
+    socket.to(room).emit("new_message", `${socket["nickname"]}: ${msg}`);
     done();
+  });
+  socket.on("nickname", (nickname) => {
+    socket["nickname"] = nickname;
   });
 });
 
